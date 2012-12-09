@@ -1,12 +1,13 @@
-(ns eopl.chap2.sec22)
+(ns eopl.chap2.sec22
+  (:use eopl.common))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 2.2.1 define-datatype and cases
 ;; bintree
-(defrecord LeafNode [datum])
-(defn leaf-node [datum] (LeafNode. datum))
-(defrecord InteriorNode [key left right])
-(defn interior-node [key left right] (InteriorNode. key left right))
+(define-datatype LeafNode leaf-node
+  [datum])
+(define-datatype InteriorNode interior-node
+  [key left right])
 
 (defn leaf-sum [tree]
   (condp instance? tree
@@ -14,22 +15,22 @@
     InteriorNode (+ (leaf-sum (:left tree)) (leaf-sum (:right tree)))))
 
 ;; s-list
-(defrecord EmptySList [])
-(defn empty-s-list [] (EmptySList.))
-(defrecord NonEmptySList [first rest])
-(defn non-empty-s-list [first rest] (NonEmptySList. first rest))
-(defrecord SymbolExp [data])
-(defn symbol-exp [data] (SymbolExp. data))
+(define-datatype EmptySList empty-s-list
+  [])
+(define-datatype NonEmptySList non-empty-s-list
+  [first rest])
+(define-datatype SymbolExp symbol-exp
+  [data])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 2.2.2 Abstract Syntax and its Representation
 ;; expression
-(defrecord VarExp [id])
-(defn var-exp [id] (VarExp. id))
-(defrecord LambdaExp [id body])
-(defn lambda-exp [id body] (LambdaExp. id body))
-(defrecord AppExp [rator rand])
-(defn app-exp [rator rand] (AppExp. rator rand))
+(define-datatype VarExp var-exp
+  [id])
+(define-datatype LambdaExp lambda-exp
+  [id body])
+(define-datatype AppExp app-exp
+  [rator rand])
 
 ;; occurs-free?
 (defn occurs-free? [var exp]

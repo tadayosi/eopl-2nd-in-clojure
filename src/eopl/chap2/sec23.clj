@@ -1,4 +1,5 @@
-(ns eopl.chap2.sec23)
+(ns eopl.chap2.sec23
+  (:use eopl.common))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 2.3.2 Procedural Representation
@@ -29,10 +30,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 2.3.3 Abstract Syntax Tree Representation
 ;; environment
-(defrecord EmptyEnvRecord [])
-(defn empty-env-record [] (EmptyEnvRecord.))
-(defrecord ExtendedEnvRecord [syms vals env])
-(defn extended-env-record [syms vals env] (ExtendedEnvRecord. syms vals env))
+(define-datatype EmptyEnvRecord empty-env-record
+  [])
+(define-datatype ExtendedEnvRecord extended-env-record
+  [syms vals env])
 
 (defn empty-env1 []
   (empty-env-record))
