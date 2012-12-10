@@ -45,7 +45,7 @@
     ExtendedEnvRecord (let [pos (list-find-position sym (:syms env))]
                         (if (number? pos)
                           (nth (:vals env) pos)
-                          (apply-env1 env sym)))))
+                          (apply-env1 (:env env) sym)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 2.3.4 Alternative Data Structure Representations
