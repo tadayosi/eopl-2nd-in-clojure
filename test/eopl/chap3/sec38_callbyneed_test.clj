@@ -1,15 +1,15 @@
-(ns eopl.chap3.sec3x-test
+(ns eopl.chap3.sec38-callbyneed-test
   (:use clojure.test
-        eopl.chap3.sec3x-interp
-        eopl.chap3.sec3x-parser))
+        eopl.chap3.sec38-callbyneed-interp
+        eopl.chap3.sec38-callbyneed-parser))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Environment
 (deftest test-env
   (is (thrown? Exception (apply-env (empty-env) 'x)))
-  (is (= 6 (apply-env (extend-env '(d x y) '(6 7 8) (empty-env)) 'd)))
-  (is (= 7 (apply-env (extend-env '(d x y) '(6 7 8) (empty-env)) 'x)))
-  (is (= 8 (apply-env (extend-env '(d x y) '(6 7 8) (empty-env)) 'y))))
+  (is (= 6 (apply-env (extend-env '(d x y) (map direct-target '(6 7 8)) (empty-env)) 'd)))
+  (is (= 7 (apply-env (extend-env '(d x y) (map direct-target '(6 7 8)) (empty-env)) 'x)))
+  (is (= 8 (apply-env (extend-env '(d x y) (map direct-target '(6 7 8)) (empty-env)) 'y))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Grammar
@@ -22,7 +22,7 @@
 (defn init-env []
   (extend-env
     '(i v x)
-    '(1 5 10)
+    (map direct-target '(1 5 10))
     (empty-env)))
 (deftest test-eval-expression
   (is (= 14 (eval-expression (primapp-exp
@@ -92,8 +92,39 @@
                                    (let (d) ((set count (add1 count)))
                                      count))))
                    (+ (g) (g))))))
-  (is (= 202 (run '(let (x) (100)
+  (is (= 203 (run '(let (x) (100)
                      (let (p) ((proc (x) (let (d) ((set x (add1 x)))
                                            x)))
                        (+ (p x) (p x)))))))
+  (is (= 1 (run '(begin 1))))
+  (is (= 3 (run '(begin 1 2 (+ 1 2)))))
+  (is (= 1 (run '(let (a b swap) (3
+                                    4
+                                    (proc (x y)
+                                          (let (temp) (x)
+                                            (begin
+                                              (set x y)
+                                              (set y temp)))))
+                    (begin
+                      (swap a b)
+                      (- a b))))))
+  (is (= 2 (run '(let (g) ((let (count) (0)
+                             (proc ()
+                                   (begin
+                                     (set count (add1 count))
+                                     count))))
+                   ((proc (x) (+ x x))
+                     (g))))))
+  (is (= 1 (run '(let (count) (0)
+                   (begin
+                     ((proc (a b)
+                            ((proc (x)
+                                   ((proc (y)
+                                          ((proc (z) (+ (+ x y) z)) y))
+                                     x))
+                              (begin
+                                (set count (add1 count))
+                                (+ a b))))
+                       15 20)
+                     count)))))
   )

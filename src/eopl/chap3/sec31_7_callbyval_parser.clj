@@ -1,5 +1,5 @@
-(ns eopl.chap3.sec3x-parser
-  (:use eopl.chap3.sec3x-interp))
+(ns eopl.chap3.sec31_7-callbyval-parser
+  (:use eopl.chap3.sec31_7-callbyval-interp))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Parser
@@ -24,6 +24,8 @@
                             (parse-expression (nth exp 4)))
                   'set (varassign-exp
                          (nth exp 1) (parse-expression (nth exp 2)))
+                  'begin (begin-exp (parse-expression (nth exp 1))
+                                    (map (fn [exp] (parse-expression exp)) (rest (rest exp))))
                   (if (.contains (list '+ '- '* 'add1 'sub1 'zero?) (first exp))
                     (primapp-exp (parse-primitive (first exp))
                                  (parse-rands (rest exp)))
