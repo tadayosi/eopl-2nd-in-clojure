@@ -1,15 +1,20 @@
 (ns eopl.chap3.sec38-callbyneed-test
   (:use clojure.test
+        eopl.chap3.sec38-callbyneed-grammar
+        eopl.chap3.sec38-callbyneed-env
         eopl.chap3.sec38-callbyneed-interp
-        eopl.chap3.sec38-callbyneed-parser))
+        eopl.chap3.sec38-callbyneed-parser)
+  (:import (eopl.chap3.sec38_callbyneed_grammar
+             LitExp VarExp PrimappExp IfExp AddPrim SubtractPrim IncrPrim
+             DirectTarget)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Environment
 (deftest test-env
   (is (thrown? Exception (apply-env (empty-env) 'x)))
-  (is (= 6 (apply-env (extend-env '(d x y) (map direct-target '(6 7 8)) (empty-env)) 'd)))
-  (is (= 7 (apply-env (extend-env '(d x y) (map direct-target '(6 7 8)) (empty-env)) 'x)))
-  (is (= 8 (apply-env (extend-env '(d x y) (map direct-target '(6 7 8)) (empty-env)) 'y))))
+  (is (= 6 (apply-env (extend-env '(d x y) (map (fn [x] (DirectTarget. x)) '(6 7 8)) (empty-env)) 'd)))
+  (is (= 7 (apply-env (extend-env '(d x y) (map (fn [x] (DirectTarget. x)) '(6 7 8)) (empty-env)) 'x)))
+  (is (= 8 (apply-env (extend-env '(d x y) (map (fn [x] (DirectTarget. x)) '(6 7 8)) (empty-env)) 'y))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Grammar
@@ -22,31 +27,31 @@
 (defn init-env []
   (extend-env
     '(i v x)
-    (map direct-target '(1 5 10))
+    (map (fn [x] (DirectTarget. x)) '(1 5 10))
     (empty-env)))
 (deftest test-eval-expression
-  (is (= 14 (eval-expression (primapp-exp
-                               (incr-prim)
-                               (list (primapp-exp
-                                       (add-prim)
-                                       (list (lit-exp 3)
-                                             (var-exp 'x)))))
+  (is (= 14 (eval-expression (PrimappExp.
+                               (IncrPrim.)
+                               (list (PrimappExp.
+                                       (AddPrim.)
+                                       (list (LitExp. 3)
+                                             (VarExp. 'x)))))
                              (init-env))))
-  (is (= 2 (eval-expression (if-exp
-                              (lit-exp 1)
-                              (lit-exp 2)
-                              (lit-exp 3))
+  (is (= 2 (eval-expression (IfExp.
+                              (LitExp. 1)
+                              (LitExp. 2)
+                              (LitExp. 3))
                             (init-env))))
-  (is (= 3 (eval-expression (if-exp
-                              (primapp-exp
-                                (subtract-prim)
-                                (list (lit-exp 3)
-                                      (primapp-exp
-                                        (add-prim)
-                                        (list (lit-exp 1)
-                                              (lit-exp 2)))))
-                              (lit-exp 2)
-                              (lit-exp 3))
+  (is (= 3 (eval-expression (IfExp.
+                              (PrimappExp.
+                                (SubtractPrim.)
+                                (list (LitExp. 3)
+                                      (PrimappExp.
+                                        (AddPrim.)
+                                        (list (LitExp. 1)
+                                              (LitExp. 2)))))
+                              (LitExp. 2)
+                              (LitExp. 3))
                             (init-env)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

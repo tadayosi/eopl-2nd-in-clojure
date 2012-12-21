@@ -1,13 +1,10 @@
-(ns eopl.chap2.sec22
-  (:use eopl.common))
+(ns eopl.chap2.sec22)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 2.2.1 define-datatype and cases
 ;; bintree
-(define-datatype LeafNode leaf-node
-  [datum])
-(define-datatype InteriorNode interior-node
-  [key left right])
+(defrecord LeafNode [datum])
+(defrecord InteriorNode [key left right])
 
 (defn leaf-sum [tree]
   (condp instance? tree
@@ -15,31 +12,25 @@
     InteriorNode (+ (leaf-sum (:left tree)) (leaf-sum (:right tree)))))
 
 ;; s-list
-(define-datatype EmptySList empty-s-list
-  [])
-(define-datatype NonEmptySList non-empty-s-list
-  [first rest])
-(define-datatype SymbolExp symbol-exp
-  [data])
+(defrecord EmptySList [])
+(defrecord NonEmptySList [first rest])
+(defrecord SymbolExp [data])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 2.2.2 Abstract Syntax and its Representation
 ;; expression
-(define-datatype VarExp var-exp
-  [id])
-(define-datatype LambdaExp lambda-exp
-  [id body])
-(define-datatype AppExp app-exp
-  [rator rand])
+(defrecord VarExp [id])
+(defrecord LambdaExp [id body])
+(defrecord AppExp [rator rand])
 
 ;; occurs-free?
 (defn occurs-free? [var exp]
   (condp instance? exp
     VarExp (= (:id exp) var)
     LambdaExp (and (not (= (:id exp) var))
-                   (occurs-free? var (:body exp))
+                   (occurs-free? var (:body exp)))
     AppExp (or (occurs-free? var (:rator exp))
-               (occurs-free? var (:rand exp))))))
+               (occurs-free? var (:rand exp)))))
 
 ;; unparse-expression
 (defn unparse-expression [exp]
@@ -55,9 +46,9 @@
   (cond
     (symbol? datum) (VarExp. datum)
     (list? datum) (if (= (first datum) 'lambda)
-                    (lambda-exp (first (second datum))
+                    (LambdaExp. (first (second datum))
                                 (parse-expression (nth datum 2)))
-                    (app-exp
+                    (AppExp.
                       (parse-expression (first datum))
                       (parse-expression (second datum))))
     :else (throw (Exception. (str 'parse-expression

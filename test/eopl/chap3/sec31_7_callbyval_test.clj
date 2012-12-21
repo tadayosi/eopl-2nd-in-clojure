@@ -1,7 +1,11 @@
 (ns eopl.chap3.sec31_7-callbyval-test
   (:use clojure.test
+        eopl.chap3.sec31_7-callbyval-grammar
+        eopl.chap3.sec31_7-callbyval-env
         eopl.chap3.sec31_7-callbyval-interp
-        eopl.chap3.sec31_7-callbyval-parser))
+        eopl.chap3.sec31_7-callbyval-parser)
+  (:import (eopl.chap3.sec31_7_callbyval_grammar
+             LitExp VarExp PrimappExp IfExp AddPrim SubtractPrim IncrPrim)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Environment
@@ -25,28 +29,28 @@
     '(1 5 10)
     (empty-env)))
 (deftest test-eval-expression
-  (is (= 14 (eval-expression (primapp-exp
-                               (incr-prim)
-                               (list (primapp-exp
-                                       (add-prim)
-                                       (list (lit-exp 3)
-                                             (var-exp 'x)))))
+  (is (= 14 (eval-expression (PrimappExp.
+                               (IncrPrim.)
+                               (list (PrimappExp.
+                                       (AddPrim.)
+                                       (list (LitExp. 3)
+                                             (VarExp. 'x)))))
                              (init-env))))
-  (is (= 2 (eval-expression (if-exp
-                              (lit-exp 1)
-                              (lit-exp 2)
-                              (lit-exp 3))
+  (is (= 2 (eval-expression (IfExp.
+                              (LitExp. 1)
+                              (LitExp. 2)
+                              (LitExp. 3))
                             (init-env))))
-  (is (= 3 (eval-expression (if-exp
-                              (primapp-exp
-                                (subtract-prim)
-                                (list (lit-exp 3)
-                                      (primapp-exp
-                                        (add-prim)
-                                        (list (lit-exp 1)
-                                              (lit-exp 2)))))
-                              (lit-exp 2)
-                              (lit-exp 3))
+  (is (= 3 (eval-expression (IfExp.
+                              (PrimappExp.
+                                (SubtractPrim.)
+                                (list (LitExp. 3)
+                                      (PrimappExp.
+                                        (AddPrim.)
+                                        (list (LitExp. 1)
+                                              (LitExp. 2)))))
+                              (LitExp. 2)
+                              (LitExp. 3))
                             (init-env)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

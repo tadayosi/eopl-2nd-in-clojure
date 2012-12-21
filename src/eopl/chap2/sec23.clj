@@ -1,5 +1,4 @@
-(ns eopl.chap2.sec23
-  (:use eopl.common))
+(ns eopl.chap2.sec23)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 2.3.2 Procedural Representation
@@ -30,15 +29,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 2.3.3 Abstract Syntax Tree Representation
 ;; environment
-(define-datatype EmptyEnvRecord empty-env-record
-  [])
-(define-datatype ExtendedEnvRecord extended-env-record
-  [syms vals env])
+(defrecord EmptyEnvRecord [])
+(defrecord ExtendedEnvRecord [syms vals env])
 
 (defn empty-env1 []
-  (empty-env-record))
+  (EmptyEnvRecord.))
 (defn extend-env1 [syms vals env]
-  (extended-env-record syms vals env))
+  (ExtendedEnvRecord. syms vals env))
 (defn apply-env1 [env sym]
   (condp instance? env
     EmptyEnvRecord (throw (Exception. (str 'apply-env1 ": No binding for " sym)))

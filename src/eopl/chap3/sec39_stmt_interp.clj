@@ -1,108 +1,19 @@
 (ns eopl.chap3.sec39-stmt-interp
-  (:use eopl.common))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Environment
-(define-datatype EmptyEnvRecord empty-env-record [])
-(define-datatype ExtendedEnvRecord extended-env-record [syms vals env])
-
-(declare apply-env apply-env-ref list-find-position list-index rib-find-position)
-(declare closure a-ref deref_ setref!)
-(defn empty-env []
-  (empty-env-record))
-(defn extend-env [syms vals env]
-  (extended-env-record syms (atom (vec vals)) env))
-(defn extend-env-recursively [proc-names idss bodies old-env]
-  (let [len (count proc-names)
-        vec (atom [])
-        env (extended-env-record
-              proc-names vec old-env)]
-    (do
-      (doseq [pos (range len)]
-        (swap! vec conj (closure
-                          (nth idss pos)
-                          (nth bodies pos)
-                          env)))
-      env)))
-(defn apply-env [env sym]
-  (deref_ (apply-env-ref env sym)))
-(defn apply-env-ref [env sym]
-  (condp instance? env
-    EmptyEnvRecord (throw (Exception. (str 'apply-env-ref ": No binding for " sym)))
-    ExtendedEnvRecord (let [pos (rib-find-position sym (:syms env))]
-                        (if (number? pos)
-                          (a-ref pos (:vals env))
-                          (apply-env-ref (:env env) sym)))))
-(defn list-find-position [sym los]
-  (list-index (fn [sym1] (= sym1 sym)) los))
-(defn list-index [pred ls]
-  (cond
-    (empty? ls) false
-    (pred (first ls)) 0
-    :else (let [list-index-r (list-index pred (rest ls))]
-            (if (number? list-index-r)
-              (+ list-index-r 1)
-              false))))
-(def rib-find-position list-find-position)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Grammar
-;; program
-(define-datatype AProgram a-program [stmt])
-
-;; statement
-(define-datatype AssignStatement assign-statement [id exp])
-(define-datatype PrintStatement print-statement [exp])
-(define-datatype CompoundStatement compound-statement [stmts])
-(define-datatype IfStatement if-statement [exp true-stmt false-stmt])
-(define-datatype WhileStatement while-statement [exp stmt])
-(define-datatype BlockStatement block-statement [ids body])
-
-;; expression
-(define-datatype LitExp lit-exp [datum])
-(define-datatype VarExp var-exp [id])
-(define-datatype PrimappExp primapp-exp [prim rands])
-(define-datatype IfExp if-exp [test-exp true-exp false-exp])
-(define-datatype LetExp let-exp [ids rands body])
-(define-datatype ProcExp proc-exp [ids body])
-(define-datatype AppExp app-exp [rator rands])
-(define-datatype LetrecExp letrec-exp [proc-names idss bodies letrec-body])
-(define-datatype VarassignExp varassign-exp [id rhs-exp])
-(define-datatype BeginExp begin-exp [exp exps])
-
-;; primitive
-(define-datatype AddPrim add-prim [])
-(define-datatype SubtractPrim subtract-prim  [])
-(define-datatype MultPrim multi-prim [])
-(define-datatype IncrPrim incr-prim [])
-(define-datatype DecrPrim decr-prim [])
-(define-datatype ZeroTestPrim zero-test-prim [])
-
-;; procval
-(define-datatype Closure closure [ids body env])
-
-;; reference
-(define-datatype ARef a-ref [position vec])
-
-;;; Operations on data types
-(defn true-value? [x]
-  (not (zero? x)))
-;; reference
-(defn primitive-deref [ref]
-  (condp instance? ref
-    ARef (@(:vec ref) (:position ref))))
-(defn primitive-setref! [ref val]
-  (condp instance? ref
-    ARef (swap! (:vec ref) assoc (:position ref) val)))
-(defn deref_ [ref]
-  (primitive-deref ref))
-(defn setref! [ref val]
-  (primitive-setref! ref val))
+  (:use eopl.chap3.sec39-stmt-grammar
+        eopl.chap3.sec39-stmt-env)
+  (:import (eopl.chap3.sec39_stmt_grammar
+             AProgram
+             AssignStatement PrintStatement CompoundStatement IfStatement WhileStatement BlockStatement
+             LitExp VarExp PrimappExp IfExp LetExp ProcExp AppExp LetrecExp VarassignExp BeginExp
+             AddPrim SubtractPrim MultPrim IncrPrim DecrPrim ZeroTestPrim
+             Closure)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Interpreter
 (declare execute-statement
-         eval-expression eval-rands eval-rand apply-primitive apply-procval)
+         eval-expression
+         eval-rands eval-rand
+         apply-primitive apply-procval)
 (defn execute-program [pgm]
   (condp instance? pgm
     AProgram (execute-statement (:stmt pgm) (empty-env))))
@@ -141,7 +52,7 @@
             (eval-expression (:false-exp exp) env))
     LetExp (let [args (eval-rands (:rands exp) env)]
              (eval-expression (:body exp) (extend-env (:ids exp) args env)))
-    ProcExp (closure (:ids exp) (:body exp) env)
+    ProcExp (Closure. (:ids exp) (:body exp) env)
     AppExp (let [proc (eval-expression (:rator exp) env)
                  args (eval-rands (:rands exp) env)]
              (if (instance? Closure proc)

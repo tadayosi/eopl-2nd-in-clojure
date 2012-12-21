@@ -1,53 +1,59 @@
 (ns eopl.chap3.sec39-stmt-parser
-  (:use eopl.chap3.sec39-stmt-interp))
+  (:use eopl.chap3.sec39-stmt-grammar
+        eopl.chap3.sec39-stmt-interp)
+  (:import (eopl.chap3.sec39_stmt_grammar
+             AProgram
+             AssignStatement PrintStatement CompoundStatement IfStatement WhileStatement BlockStatement
+             LitExp VarExp PrimappExp IfExp LetExp ProcExp AppExp LetrecExp VarassignExp BeginExp
+             AddPrim SubtractPrim MultPrim IncrPrim DecrPrim ZeroTestPrim)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Parser
 (declare parse-statement
          parse-expression parse-rands parse-rand parse-primitive)
 (defn parse-program [pgm]
-  (a-program (parse-statement pgm)))
+  (AProgram. (parse-statement pgm)))
 (defn parse-statement [stmt]
   (condp = (first stmt)
-    '= (assign-statement (nth stmt 1)
+    '= (AssignStatement. (nth stmt 1)
                          (parse-expression (nth stmt 2)))
-    'print (print-statement (parse-expression (nth stmt 1)))
-    'if (if-statement (parse-expression (nth stmt 1))
+    'print (PrintStatement. (parse-expression (nth stmt 1)))
+    'if (IfStatement. (parse-expression (nth stmt 1))
                       (parse-statement (nth stmt 2))
                       (parse-statement (nth stmt 3)))
-    'while (while-statement (parse-expression (nth stmt 1))
+    'while (WhileStatement. (parse-expression (nth stmt 1))
                             (parse-statement (nth stmt 2)))
-    'var (block-statement (nth stmt 1)
+    'var (BlockStatement. (nth stmt 1)
                           (parse-statement (nth stmt 2)))
     (if (list? (first stmt))
-      (compound-statement (map parse-statement stmt))
+      (CompoundStatement. (map parse-statement stmt))
       (throw (Exception. (str 'parse-statement
                               ": Invalid concrete syntax " stmt))))))
 
 (defn parse-expression [exp]
   (cond
-    (number? exp) (lit-exp exp)
-    (symbol? exp) (var-exp exp)
+    (number? exp) (LitExp. exp)
+    (symbol? exp) (VarExp. exp)
     (list? exp) (condp = (first exp)
-                  'if (if-exp (parse-expression (nth exp 1))
+                  'if (IfExp. (parse-expression (nth exp 1))
                               (parse-expression (nth exp 2))
                               (parse-expression (nth exp 3)))
-                  'let (let-exp (nth exp 1)
-                         (parse-rands (nth exp 2))
-                         (parse-expression (nth exp 3)))
-                  'proc (proc-exp (nth exp 1)
+                  'let (LetExp. (nth exp 1)
+                                (parse-rands (nth exp 2))
+                                (parse-expression (nth exp 3)))
+                  'proc (ProcExp. (nth exp 1)
                                   (parse-expression (nth exp 2)))
-                  'letrec (letrec-exp
+                  'letrec (LetrecExp.
                             (nth exp 1) (nth exp 2) (parse-rands (nth exp 3))
                             (parse-expression (nth exp 4)))
-                  'set (varassign-exp
+                  'set (VarassignExp.
                          (nth exp 1) (parse-expression (nth exp 2)))
-                  'begin (begin-exp (parse-expression (nth exp 1))
+                  'begin (BeginExp. (parse-expression (nth exp 1))
                                     (map (fn [exp] (parse-expression exp)) (rest (rest exp))))
                   (if (.contains (list '+ '- '* 'add1 'sub1 'zero?) (first exp))
-                    (primapp-exp (parse-primitive (first exp))
+                    (PrimappExp. (parse-primitive (first exp))
                                  (parse-rands (rest exp)))
-                    (app-exp (parse-expression (first exp))
+                    (AppExp. (parse-expression (first exp))
                              (parse-rands (rest exp)))))
     :else (throw (Exception. (str 'parse-expression
                                   ": Invalid concrete syntax " exp)))))
@@ -57,12 +63,12 @@
   (parse-expression rand))
 (defn parse-primitive [prim]
   (condp = prim
-    '+ (add-prim)
-    '- (subtract-prim)
-    '* (multi-prim)
-    'add1 (incr-prim)
-    'sub1 (decr-prim)
-    'zero? (zero-test-prim)
+    '+ (AddPrim.)
+    '- (SubtractPrim.)
+    '* (MultPrim.)
+    'add1 (IncrPrim.)
+    'sub1 (DecrPrim.)
+    'zero? (ZeroTestPrim.)
     (throw (Exception. (str 'parse-primitive
                             ": Invalid concrete syntax " prim)))))
 
