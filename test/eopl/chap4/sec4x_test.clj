@@ -1,0 +1,115 @@
+(ns eopl.chap4.sec4x-test
+  (:use clojure.test
+        eopl.chap4.sec4x-grammar
+        eopl.chap4.sec4x-env
+        eopl.chap4.sec4x-interp
+        eopl.chap4.sec4x-parser)
+  (:import (eopl.chap4.sec4x_grammar
+             LitExp VarExp PrimappExp IfExp AddPrim SubtractPrim IncrPrim)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Environment
+(deftest test-env
+  (is (thrown? Exception (apply-env (empty-env) 'x)))
+  (is (= 6 (apply-env (extend-env '(d x y) '(6 7 8) (empty-env)) 'd)))
+  (is (= 7 (apply-env (extend-env '(d x y) '(6 7 8) (empty-env)) 'x)))
+  (is (= 8 (apply-env (extend-env '(d x y) '(6 7 8) (empty-env)) 'y))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Grammar
+(deftest test-true-value?
+  (is (= true (true-value? 1)))
+  (is (= false (true-value? 0))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Interpreter
+(defn init-env []
+  (extend-env
+    '(i v x)
+    '(1 5 10)
+    (empty-env)))
+(deftest test-eval-expression
+  (is (= 14 (eval-expression (PrimappExp.
+                               (IncrPrim.)
+                               (list (PrimappExp.
+                                       (AddPrim.)
+                                       (list (LitExp. 3)
+                                             (VarExp. 'x)))))
+                             (init-env))))
+  (is (= 2 (eval-expression (IfExp.
+                              (LitExp. 1)
+                              (LitExp. 2)
+                              (LitExp. 3))
+                            (init-env))))
+  (is (= 3 (eval-expression (IfExp.
+                              (PrimappExp.
+                                (SubtractPrim.)
+                                (list (LitExp. 3)
+                                      (PrimappExp.
+                                        (AddPrim.)
+                                        (list (LitExp. 1)
+                                              (LitExp. 2)))))
+                              (LitExp. 2)
+                              (LitExp. 3))
+                            (init-env)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Parser
+(deftest test-run
+  (is (= 5 (run '5)))
+  (is (= 3 (run '(add1 2))))
+  (is (= 5 (run '(+ (add1 2 ) (- 6 4)))))
+  (is (= 2 (run '(if 1 2 3))))
+  (is (= 3 (run '(if (- 3 (+ 1 2)) 2 3))))
+  (is (= 11 (run '(let (x y) (5 6) (+ x y)))))
+  (is (= 4 (run '(let (x) (1) (let (x) ((+ x 2)) (add1 x))))))
+  (is (= 2 (run '((proc (int) (x) (add1 x)) 1))))
+  (is (= 176 (run '(let (x) (5)
+                     (let (x f g)
+                       (38
+                         (proc (int int) (y z) (* y (+ x z)))
+                         (proc (int) (u) (+ u x)))
+                       (f (g 3) 17))))))
+  (is (= 1 (run '(zero? 0))))
+  (is (= 0 (run '(zero? (sub1 5)))))
+  (is (= 720 (run '(letrec
+                     (int) (fact) ((int)) ((x)) ((if (zero? x) 1 (* x (fact (sub1 x)))))
+                     (fact 6)))))
+  (is (= 1 (run '(letrec
+                   (int int) (even odd) ((int) (int)) ((x) (x)) ((if (zero? x) 1 (odd (sub1 x)))
+                                                                  (if (zero? x) 0 (even (sub1 x))))
+                   (odd 13)))))
+  (is (= 1 (run '(let (x) (0)
+                   (letrec
+                     (bool bool) (even odd) (() ()) (() ()) ((if (zero? x)
+                                                             true
+                                                             (let (d) ((set x (sub1 x)))
+                                                               (odd)))
+                                                            (if (zero? x)
+                                                              false
+                                                              (let (d) ((set x (sub1 x)))
+                                                                (even))))
+                     (let (d) ((set x 13))
+                       (odd)))))))
+  (is (= 3 (run '(let (g) ((let (count) (0)
+                             (proc () ()
+                                   (let (d) ((set count (add1 count)))
+                                     count))))
+                   (+ (g) (g))))))
+  (is (= 202 (run '(let (x) (100)
+                     (let (p) ((proc (int) (x) (let (d) ((set x (add1 x)))
+                                                 x)))
+                       (+ (p x) (p x)))))))
+  (is (= 1 (run '(begin 1))))
+  (is (= 3 (run '(begin 1 2 (+ 1 2)))))
+  (is (= -1 (run '(let (a b swap) (3
+                                    4
+                                    (proc (int int) (x y)
+                                          (let (temp) (x)
+                                            (begin
+                                              (set x y)
+                                              (set y temp)))))
+                    (begin
+                      (swap a b)
+                      (- a b))))))
+  )
