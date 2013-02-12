@@ -53,9 +53,9 @@
                         (if (number? pos)
                           (ARef. pos (:vals env))
                           (apply-env-ref (:env env) sym)))))
-(defn list-find-position [sym los]
+(defn- list-find-position [sym los]
   (list-index (fn [sym1] (= sym1 sym)) los))
-(defn list-index [pred ls]
+(defn- list-index [pred ls]
   (cond
     (empty? ls) false
     (pred (first ls)) 0

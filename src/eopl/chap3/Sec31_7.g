@@ -21,13 +21,13 @@ tokens {
 
 // *** scanner spec ************************************************************
 WHITE_SP
-  : (' ' | '\t' | '\r' | '\n')+ { skip(); }
+  : (' ' | '\t' | '\r' | '\n')+ { $channel = HIDDEN; }
   ;
 COMMENT
   : '%' (~('\r' | '\n'))* { skip(); }
   ;
 IDENTIFIER
-  : ('a'..'z' | 'A'..'Z') ('a'..'z' | 'A'..'Z' | '0'..'9' | '?')*
+  : ('a'..'z' | 'A'..'Z') ('a'..'z' | 'A'..'Z' | '0'..'9' | '-' | '?')*
   ;
 NUMBER
   : ('0'..'9')+
@@ -64,7 +64,7 @@ identifiers
   | ids+=IDENTIFIER (',' ids+=IDENTIFIER)+ -> ^(IDS $ids+)
   ;
 procedureDeclaration
-  : procName+=IDENTIFIER '(' ids=identifiers ')' '=' body=expression
+  : procName=IDENTIFIER '(' ids=identifiers ')' '=' body=expression
     -> ^(PROC_DECL $procName $ids $body)
   ;
 primitive

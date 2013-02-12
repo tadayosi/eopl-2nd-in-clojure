@@ -13,7 +13,7 @@
 ;;; Parser
 (declare parse-expression parse-rands parse-rand parse-primitive
          parse-ids parse-id parse-number parse-proc-decls)
-(defn parse-program [pgm]
+(defn scan&parse [pgm]
   (let [lexer (Sec31_7Lexer. (ANTLRStringStream. pgm))
         parser (Sec31_7Parser. (CommonTokenStream. lexer))]
     (let [ast (-> parser .program .getTree)]
@@ -78,11 +78,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Read-eval-print loop
 (defn run [x]
-  (eval-program (parse-program x)))
+  (eval-program (scan&parse x)))
 (defn read-eval-print []
   (do
     (println "--> ")
-    (println (eval-program (parse-program (read))))
+    (println (eval-program (scan&parse (read))))
     (newline)
     (read-eval-print)))
 #_(read-eval-print)
